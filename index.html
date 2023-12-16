@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dharani Trisandya</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <style>
       @font-face {
         /*font from https://codepen.io/Nimoi/pen/keaFn*/
@@ -22,226 +23,628 @@
       }
 
       body {
-        background: radial-gradient(#fec215, #f8a90c);
+        /* background: radial-gradient(#fec215, #f8a90c); */
+        background: radial-gradient(circle, #444, #333, #222, #111, #000);
       }
 
-      .text {
+      .content {
+        background: radial-gradient(circle, #444, #333, #222, #111, #000);
         position: absolute;
         left: 0;
         top: 0;
         width: 100vw;
-        font-size: 5vw;
-        text-align: center;
-        margin-top: calc(50vh - 0.5em);
-        font-family: Monoton;
-        color: hsla(35, 99%, 50%, 0.3);
+        height: 100vh;
         z-index: -1;
+      }
+
+      div.invitation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 5vw;
+        text-align: center;
+        color: rgba(255, 239, 0, 0.8);
+        font-size: 3vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+          sans-serif;
+      }
+
+      .invitation h1 {
+        font-family: Monoton;
+        font-size: 8vw;
+      }
+
+      .invitation p {
+        font-size: 2vw;
+      }
+
+      .invitation p.para {
+        font-size: 3vw;
+      }
+
+      .invitation p > a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .invitation h2 {
+        font-size: 10vw;
+      }
+
+      .invitation hr {
+        width: 100vw;
+        margin: 16px;
+        border-color: yellowgreen;
+      }
+
+      .invitation p.by {
+        font-size: 3vw;
+        position: absolute;
+        bottom: 10vh;
+        width: 100vw;
+        text-align: right;
+        right: 16px;
+      }
+
+      img {
+        position: absolute;
+        max-width: 30vw;
+        height: auto;
+        opacity: 0.7;
+        z-index: -1;
+      }
+
+      img.left {
+        bottom: 0;
+        animation: moveLeftAndRight 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes moveLeftAndRight {
+        0% {
+          left: -100px;
+        }
+        100% {
+          left: 0;
+        }
       }
     </style>
   </head>
   <body>
     <canvas id="c"></canvas>
-    <div class="text">HAPPY BIRTHDAY!!!</div>
+    <div class="content">
+      <img class="left" src="/adt-left.png" />
+      <div class="invitation">
+        <h1>Dharani Trisandya</h1>
+        <p>is turning</p>
+        <h2>ONE</h2>
+        <hr />
+        <p class="para">
+          Loads of color and, lots of sweet let's make Dharani's birthday a
+          wonderful treat. <br />
+          Come help us celebrate the special day with a cheerful party. You're
+          warmly invited to our Princess First Birthday Celebration!
+        </p>
+        <hr />
+        <p class="para">
+          Venue:
+          <a href="https://maps.app.goo.gl/TAxfFjDg7mNiZQsf8"
+            >Our home @ Pedakallepalli</a
+          >
+        </p>
+        <p class="by">- Jyothi Babu Araja & Family</p>
+      </div>
+    </div>
 
     <script>
-      var c = document.getElementById("c");
-      var ctx = c.getContext("2d");
+      // when animating on canvas, it is best to use requestAnimationFrame instead of setTimeout or setInterval
+      // not supported in all browsers though and sometimes needs a prefix, so we need a shim
+      window.requestAnimFrame = (function () {
+        return (
+          window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          function (callback) {
+            window.setTimeout(callback, 1000 / 60);
+          }
+        );
+      })();
 
-      var bc = document.createElement("canvas");
-      var bCtx = bc.getContext("2d");
+      function loadFireworks() {
+        // now we will setup our basic variables for the demo
+        let canvas = document.getElementById("c"),
+          ctx = canvas.getContext("2d"),
+          // full screen dimensions
+          cw = window.innerWidth,
+          ch = window.innerHeight,
+          // firework collection
+          fireworks = [],
+          // particle collection
+          particles = [],
+          // starting hue
+          hue = 120,
+          // when launching fireworks with a click, too many get launched at once without a limiter, one launch per 5 loop ticks
+          limiterTotal = 5,
+          limiterTick = 0,
+          // this will time the auto launches of fireworks, one launch per 80 loop ticks
+          timerTotal = 80,
+          timerTick = 0,
+          mousedown = false,
+          // mouse x coordinate,
+          mx,
+          // mouse y coordinate
+          my;
 
-      var cw = (c.width = bc.width = window.innerWidth),
-        cx = cw / 2;
-      var ch = (c.height = bc.height = window.innerHeight + 100),
-        cy = ch;
+        // set canvas dimensions
+        canvas.width = cw;
+        canvas.height = ch;
 
-      var frames = 0;
-      var requestId = null;
-      var rad = Math.PI / 180;
-      var kappa = 0.5522847498;
+        // now we are going to setup our function placeholders for the entire demo
 
-      var x, y;
-      bCtx.strokeStyle = "#abcdef";
-      bCtx.lineWidth = 1;
-
-      var balloons = [];
-
-      function Balloon() {
-        this.r = randomIntFromInterval(20, 70);
-        this.R = 1.4 * this.r;
-        this.x = randomIntFromInterval(this.r, cw - this.r);
-        this.y = ch + 2 * this.r;
-        this.a = this.r * 4.5;
-        this.pm = Math.random() < 0.5 ? -1 : 1;
-        this.speed = randomIntFromInterval(1.5, 4);
-        this.k = this.speed / 5;
-        this.hue = this.pm > 0 ? "210" : "10";
-      }
-
-      function Draw() {
-        updateBallons(bCtx);
-
-        ctx.clearRect(0, 0, cw, ch);
-        var img = bc;
-        ctx.drawImage(img, 0, 0);
-
-        requestId = window.requestAnimationFrame(Draw);
-      }
-      //requestId = window.requestAnimationFrame(Draw);
-
-      function Init() {
-        if (requestId) {
-          window.cancelAnimationFrame(requestId);
-          requestId = null;
+        // get a random number within a range
+        function random(min, max) {
+          return Math.random() * (max - min) + min;
         }
-        (cw = c.width = bc.width = window.innerWidth), (cx = cw / 2);
-        (ch = c.height = bc.height = window.innerHeight + 100), (cy = ch);
-        bCtx.strokeStyle = "#abcdef";
-        bCtx.lineWidth = 1;
-        Draw();
-      }
 
-      setTimeout(function () {
-        Init();
-        window.addEventListener("resize", Init, false);
-      }, 15);
-
-      function updateBallons(ctx) {
-        frames += 1;
-        if (frames % 37 == 0 && balloons.length < 37) {
-          var balloon = new Balloon();
-          balloons.push(balloon);
+        // calculate the distance between two points
+        function calculateDistance(p1x, p1y, p2x, p2y) {
+          var xDistance = p1x - p2x,
+            yDistance = p1y - p2y;
+          return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
         }
-        ctx.clearRect(0, 0, cw, ch);
 
-        for (var i = 0; i < balloons.length; i++) {
-          var b = balloons[i];
-          if (b.y > -b.a) {
-            b.y -= b.speed;
+        // create firework
+        function Firework(sx, sy, tx, ty) {
+          // actual coordinates
+          this.x = sx;
+          this.y = sy;
+          // starting coordinates
+          this.sx = sx;
+          this.sy = sy;
+          // target coordinates
+          this.tx = tx;
+          this.ty = ty;
+          // distance from starting point to target
+          this.distanceToTarget = calculateDistance(sx, sy, tx, ty);
+          this.distanceTraveled = 0;
+          // track the past coordinates of each firework to create a trail effect, increase the coordinate count to create more prominent trails
+          this.coordinates = [];
+          this.coordinateCount = 3;
+          // populate initial coordinate collection with the current coordinates
+          while (this.coordinateCount--) {
+            this.coordinates.push([this.x, this.y]);
+          }
+          this.angle = Math.atan2(ty - sy, tx - sx);
+          this.speed = 2;
+          this.acceleration = 1.05;
+          this.brightness = random(50, 70);
+          // circle target indicator radius
+          this.targetRadius = 1;
+        }
+
+        // update firework
+        Firework.prototype.update = function (index) {
+          // remove last item in coordinates array
+          this.coordinates.pop();
+          // add current coordinates to the start of the array
+          this.coordinates.unshift([this.x, this.y]);
+
+          // cycle the circle target indicator radius
+          if (this.targetRadius < 8) {
+            this.targetRadius += 0.3;
           } else {
-            b.y = parseInt(ch + b.r + b.R);
+            this.targetRadius = 1;
           }
 
-          var p = thread(b, ctx);
-          b.cx = p.x;
-          b.cy = p.y - b.R;
-          ctx.fillStyle = Grd(p.x, p.y, b.r, b.hue);
-          drawBalloon(b, ctx);
+          // speed up the firework
+          this.speed *= this.acceleration;
+
+          // get the current velocities based on angle and speed
+          var vx = Math.cos(this.angle) * this.speed,
+            vy = Math.sin(this.angle) * this.speed;
+          // how far will the firework have traveled with velocities applied?
+          this.distanceTraveled = calculateDistance(
+            this.sx,
+            this.sy,
+            this.x + vx,
+            this.y + vy
+          );
+
+          // if the distance traveled, including velocities, is greater than the initial distance to the target, then the target has been reached
+          if (this.distanceTraveled >= this.distanceToTarget) {
+            createParticles(this.tx, this.ty);
+            // remove the firework, use the index passed into the update function to determine which to remove
+            fireworks.splice(index, 1);
+          } else {
+            // target not reached, keep traveling
+            this.x += vx;
+            this.y += vy;
+          }
+        };
+
+        // draw firework
+        Firework.prototype.draw = function () {
+          ctx.beginPath();
+          // move to the last tracked coordinate in the set, then draw a line to the current x and y
+          ctx.moveTo(
+            this.coordinates[this.coordinates.length - 1][0],
+            this.coordinates[this.coordinates.length - 1][1]
+          );
+          ctx.lineTo(this.x, this.y);
+          ctx.strokeStyle = "hsl(" + hue + ", 100%, " + this.brightness + "%)";
+          ctx.stroke();
+
+          ctx.beginPath();
+          // draw the target for this firework with a pulsing circle
+          ctx.arc(this.tx, this.ty, this.targetRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        };
+
+        // create particle
+        function Particle(x, y) {
+          this.x = x;
+          this.y = y;
+          // track the past coordinates of each particle to create a trail effect, increase the coordinate count to create more prominent trails
+          this.coordinates = [];
+          this.coordinateCount = 5;
+          while (this.coordinateCount--) {
+            this.coordinates.push([this.x, this.y]);
+          }
+          // set a random angle in all possible directions, in radians
+          this.angle = random(0, Math.PI * 2);
+          this.speed = random(1, 10);
+          // friction will slow the particle down
+          this.friction = 0.95;
+          // gravity will be applied and pull the particle down
+          this.gravity = 1;
+          // set the hue to a random number +-50 of the overall hue variable
+          this.hue = random(hue - 50, hue + 50);
+          this.brightness = random(50, 80);
+          this.alpha = 1;
+          // set how fast the particle fades out
+          this.decay = random(0.015, 0.03);
         }
-      }
 
-      function drawBalloon(b, ctx) {
-        var or = b.r * kappa; // offset
+        // update particle
+        Particle.prototype.update = function (index) {
+          // remove last item in coordinates array
+          this.coordinates.pop();
+          // add current coordinates to the start of the array
+          this.coordinates.unshift([this.x, this.y]);
+          // slow down the particle
+          this.speed *= this.friction;
+          // apply velocity
+          this.x += Math.cos(this.angle) * this.speed;
+          this.y += Math.sin(this.angle) * this.speed + this.gravity;
+          // fade out the particle
+          this.alpha -= this.decay;
 
-        var p1 = {
-          x: b.cx - b.r,
-          y: b.cy,
-        };
-        var pc11 = {
-          x: p1.x,
-          y: p1.y + or,
-        };
-        var pc12 = {
-          x: p1.x,
-          y: p1.y - or,
-        };
-
-        var p2 = {
-          x: b.cx,
-          y: b.cy - b.r,
-        };
-        var pc21 = {
-          x: b.cx - or,
-          y: p2.y,
-        };
-        var pc22 = {
-          x: b.cx + or,
-          y: p2.y,
+          // remove the particle once the alpha is low enough, based on the passed in index
+          if (this.alpha <= this.decay) {
+            particles.splice(index, 1);
+          }
         };
 
-        var p3 = {
-          x: b.cx + b.r,
-          y: b.cy,
-        };
-        var pc31 = {
-          x: p3.x,
-          y: p3.y - or,
-        };
-        var pc32 = {
-          x: p3.x,
-          y: p3.y + or,
-        };
-
-        var p4 = {
-          x: b.cx,
-          y: b.cy + b.R,
-        };
-        var pc41 = {
-          x: p4.x + or,
-          y: p4.y,
-        };
-        var pc42 = {
-          x: p4.x - or,
-          y: p4.y,
+        // draw particle
+        Particle.prototype.draw = function () {
+          ctx.beginPath();
+          // move to the last tracked coordinates in the set, then draw a line to the current x and y
+          ctx.moveTo(
+            this.coordinates[this.coordinates.length - 1][0],
+            this.coordinates[this.coordinates.length - 1][1]
+          );
+          ctx.lineTo(this.x, this.y);
+          ctx.strokeStyle =
+            "hsla(" +
+            this.hue +
+            ", 100%, " +
+            this.brightness +
+            "%, " +
+            this.alpha +
+            ")";
+          ctx.stroke();
         };
 
-        var t1 = {
-          x: p4.x + 0.2 * b.r * Math.cos(70 * rad),
-          y: p4.y + 0.2 * b.r * Math.sin(70 * rad),
-        };
-        var t2 = {
-          x: p4.x + 0.2 * b.r * Math.cos(110 * rad),
-          y: p4.y + 0.2 * b.r * Math.sin(110 * rad),
-        };
-
-        //balloon
-        ctx.beginPath();
-        ctx.moveTo(p4.x, p4.y);
-        ctx.bezierCurveTo(pc42.x, pc42.y, pc11.x, pc11.y, p1.x, p1.y);
-        ctx.bezierCurveTo(pc12.x, pc12.y, pc21.x, pc21.y, p2.x, p2.y);
-        ctx.bezierCurveTo(pc22.x, pc22.y, pc31.x, pc31.y, p3.x, p3.y);
-        ctx.bezierCurveTo(pc32.x, pc32.y, pc41.x, pc41.y, p4.x, p4.y);
-        //knot
-        ctx.lineTo(t1.x, t1.y);
-        ctx.lineTo(t2.x, t2.y);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      function thread(b, ctx) {
-        ctx.beginPath();
-
-        for (var i = b.a; i > 0; i -= 1) {
-          var t = i * rad;
-          x = b.x + b.pm * 50 * Math.cos(b.k * t - frames * rad);
-          y = b.y + b.pm * 25 * Math.sin(b.k * t - frames * rad) + 50 * t;
-          ctx.lineTo(x, y);
+        // create particle group/explosion
+        function createParticles(x, y) {
+          // increase the particle count for a bigger explosion, beware of the canvas performance hit with the increased particles though
+          var particleCount = 30;
+          while (particleCount--) {
+            particles.push(new Particle(x, y));
+          }
         }
-        ctx.stroke();
-        return (p = {
-          x: x,
-          y: y,
+
+        // main demo loop
+        function loop() {
+          // this function will run endlessly with requestAnimationFrame
+          requestAnimFrame(loop);
+
+          // increase the hue to get different colored fireworks over time
+          //hue += 0.5;
+
+          // create random color
+          hue = random(0, 360);
+
+          // normally, clearRect() would be used to clear the canvas
+          // we want to create a trailing effect though
+          // setting the composite operation to destination-out will allow us to clear the canvas at a specific opacity, rather than wiping it entirely
+          ctx.globalCompositeOperation = "destination-out";
+          // decrease the alpha property to create more prominent trails
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+          ctx.fillRect(0, 0, cw, ch);
+          // change the composite operation back to our main mode
+          // lighter creates bright highlight points as the fireworks and particles overlap each other
+          ctx.globalCompositeOperation = "lighter";
+
+          // loop over each firework, draw it, update it
+          var i = fireworks.length;
+          while (i--) {
+            fireworks[i].draw();
+            fireworks[i].update(i);
+          }
+
+          // loop over each particle, draw it, update it
+          var i = particles.length;
+          while (i--) {
+            particles[i].draw();
+            particles[i].update(i);
+          }
+
+          // launch fireworks automatically to random coordinates, when the mouse isn't down
+          if (timerTick >= timerTotal) {
+            if (!mousedown) {
+              // start the firework at the bottom middle of the screen, then set the random target coordinates, the random y coordinates will be set within the range of the top half of the screen
+              for (var i = 1; i < 30; i++) {
+                fireworks.push(
+                  new Firework(random(0, cw), ch, random(0, cw), random(0, ch))
+                );
+              }
+              //fireworks.push( new Firework( cw / 2, ch, random( 0, cw ), random( 0, ch / 2 ) ) );
+              timerTick = 0;
+            }
+          } else {
+            timerTick++;
+          }
+
+          // limit the rate at which fireworks get launched when mouse is down
+          if (limiterTick >= limiterTotal) {
+            if (mousedown) {
+              // start the firework at the bottom middle of the screen, then set the current mouse coordinates as the target
+              fireworks.push(new Firework(cw / 2, ch, mx, my));
+              limiterTick = 0;
+            }
+          } else {
+            limiterTick++;
+          }
+        }
+
+        // mouse event bindings
+        // update the mouse coordinates on mousemove
+        canvas.addEventListener("mousemove", function (e) {
+          mx = e.pageX - canvas.offsetLeft;
+          my = e.pageY - canvas.offsetTop;
         });
+
+        // toggle mousedown state and prevent canvas from being selected
+        canvas.addEventListener("mousedown", function (e) {
+          e.preventDefault();
+          mousedown = true;
+        });
+
+        canvas.addEventListener("mouseup", function (e) {
+          e.preventDefault();
+          mousedown = false;
+        });
+
+        loop();
       }
 
-      function Grd(x, y, r, hue) {
-        grd = ctx.createRadialGradient(
-          x - 0.5 * r,
-          y - 1.7 * r,
-          0,
-          x - 0.5 * r,
-          y - 1.7 * r,
-          r
-        );
-        grd.addColorStop(0, "hsla(" + hue + ",100%,65%,.95)");
-        grd.addColorStop(0.4, "hsla(" + hue + ",100%,45%,.85)");
-        grd.addColorStop(1, "hsla(" + hue + ",100%,25%,.80)");
-        return grd;
+      function loadBalloons() {
+        var c = document.getElementById("c");
+        var ctx = c.getContext("2d");
+
+        var bc = document.createElement("canvas");
+        var bCtx = bc.getContext("2d");
+
+        var cw = (c.width = bc.width = window.innerWidth),
+          cx = cw / 2;
+        var ch = (c.height = bc.height = window.innerHeight + 100),
+          cy = ch;
+
+        var frames = 0;
+        var requestId = null;
+        var rad = Math.PI / 180;
+        var kappa = 0.5522847498;
+
+        var x, y;
+        bCtx.strokeStyle = "#abcdef";
+        bCtx.lineWidth = 1;
+
+        var balloons = [];
+
+        function Balloon() {
+          this.r = randomIntFromInterval(20, 50);
+          this.R = 1.4 * this.r;
+          this.x = randomIntFromInterval(this.r, cw - this.r);
+          this.y = ch + 2 * this.r;
+          this.a = this.r * 4.5;
+          this.pm = Math.random() < 0.5 ? -1 : 1;
+          this.speed = randomIntFromInterval(1.5, 4);
+          this.k = this.speed / 5;
+          this.hue = this.pm > 0 ? "210" : "10";
+        }
+
+        function Draw() {
+          updateBallons(bCtx);
+
+          //ctx.clearRect(0, 0, cw, ch);
+          var img = bc;
+          ctx.drawImage(img, 0, 0);
+
+          requestId = window.requestAnimationFrame(Draw);
+        }
+        //requestId = window.requestAnimationFrame(Draw);
+
+        function Init() {
+          if (requestId) {
+            window.cancelAnimationFrame(requestId);
+            requestId = null;
+          }
+          (cw = c.width = bc.width = window.innerWidth), (cx = cw / 2);
+          (ch = c.height = bc.height = window.innerHeight + 100), (cy = ch);
+          bCtx.strokeStyle = "#abcdef";
+          bCtx.lineWidth = 1;
+          Draw();
+        }
+
+        setTimeout(function () {
+          Init();
+          window.addEventListener("resize", Init, false);
+        }, 15);
+
+        function updateBallons(ctx) {
+          frames += 1;
+          if (frames % 37 == 0 && balloons.length < 37) {
+            var balloon = new Balloon();
+            balloons.push(balloon);
+          }
+          ctx.clearRect(0, 0, cw, ch);
+
+          for (var i = 0; i < balloons.length; i++) {
+            var b = balloons[i];
+            if (b.y > -b.a) {
+              b.y -= b.speed;
+            } else {
+              b.y = parseInt(ch + b.r + b.R);
+            }
+
+            var p = thread(b, ctx);
+            b.cx = p.x;
+            b.cy = p.y - b.R;
+            ctx.fillStyle = Grd(p.x, p.y, b.r, b.hue);
+            drawBalloon(b, ctx);
+          }
+        }
+
+        function drawBalloon(b, ctx) {
+          var or = b.r * kappa; // offset
+
+          var p1 = {
+            x: b.cx - b.r,
+            y: b.cy,
+          };
+          var pc11 = {
+            x: p1.x,
+            y: p1.y + or,
+          };
+          var pc12 = {
+            x: p1.x,
+            y: p1.y - or,
+          };
+
+          var p2 = {
+            x: b.cx,
+            y: b.cy - b.r,
+          };
+          var pc21 = {
+            x: b.cx - or,
+            y: p2.y,
+          };
+          var pc22 = {
+            x: b.cx + or,
+            y: p2.y,
+          };
+
+          var p3 = {
+            x: b.cx + b.r,
+            y: b.cy,
+          };
+          var pc31 = {
+            x: p3.x,
+            y: p3.y - or,
+          };
+          var pc32 = {
+            x: p3.x,
+            y: p3.y + or,
+          };
+
+          var p4 = {
+            x: b.cx,
+            y: b.cy + b.R,
+          };
+          var pc41 = {
+            x: p4.x + or,
+            y: p4.y,
+          };
+          var pc42 = {
+            x: p4.x - or,
+            y: p4.y,
+          };
+
+          var t1 = {
+            x: p4.x + 0.2 * b.r * Math.cos(70 * rad),
+            y: p4.y + 0.2 * b.r * Math.sin(70 * rad),
+          };
+          var t2 = {
+            x: p4.x + 0.2 * b.r * Math.cos(110 * rad),
+            y: p4.y + 0.2 * b.r * Math.sin(110 * rad),
+          };
+
+          //balloon
+          ctx.beginPath();
+          ctx.moveTo(p4.x, p4.y);
+          ctx.bezierCurveTo(pc42.x, pc42.y, pc11.x, pc11.y, p1.x, p1.y);
+          ctx.bezierCurveTo(pc12.x, pc12.y, pc21.x, pc21.y, p2.x, p2.y);
+          ctx.bezierCurveTo(pc22.x, pc22.y, pc31.x, pc31.y, p3.x, p3.y);
+          ctx.bezierCurveTo(pc32.x, pc32.y, pc41.x, pc41.y, p4.x, p4.y);
+          //knot
+          ctx.lineTo(t1.x, t1.y);
+          ctx.lineTo(t2.x, t2.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        function thread(b, ctx) {
+          ctx.beginPath();
+
+          for (var i = b.a; i > 0; i -= 1) {
+            var t = i * rad;
+            x = b.x + b.pm * 50 * Math.cos(b.k * t - frames * rad);
+            y = b.y + b.pm * 25 * Math.sin(b.k * t - frames * rad) + 50 * t;
+            ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          return (p = {
+            x: x,
+            y: y,
+          });
+        }
+
+        function Grd(x, y, r, hue) {
+          grd = ctx.createRadialGradient(
+            x - 0.5 * r,
+            y - 1.7 * r,
+            0,
+            x - 0.5 * r,
+            y - 1.7 * r,
+            r
+          );
+          grd.addColorStop(0, "hsla(" + hue + ",100%,65%,.95)");
+          grd.addColorStop(0.4, "hsla(" + hue + ",100%,45%,.85)");
+          grd.addColorStop(1, "hsla(" + hue + ",100%,25%,.80)");
+          return grd;
+        }
+
+        function randomIntFromInterval(mn, mx) {
+          return ~~(Math.random() * (mx - mn + 1) + mn);
+        }
       }
 
-      function randomIntFromInterval(mn, mx) {
-        return ~~(Math.random() * (mx - mn + 1) + mn);
-      }
+      window.onload = function () {
+        loadFireworks();
+        loadBalloons();
+      };
     </script>
   </body>
 </html>
