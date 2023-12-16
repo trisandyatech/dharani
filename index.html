@@ -42,26 +42,29 @@
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        padding: 5vw;
         text-align: center;
         color: rgba(255, 239, 0, 0.8);
-        font-size: 3vh;
+
+        height: 100%;
+        /* font-size: 3vh; */
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
           sans-serif;
+        padding: 16px;
       }
 
       .invitation h1 {
         font-family: Monoton;
-        font-size: 8vw;
+        font-size: 48px;
       }
 
       .invitation p {
-        font-size: 2vw;
+        font-size: 24px;
       }
 
       .invitation p.para {
-        font-size: 3vw;
+        /* font-size: 3vw; */
+        margin: 20px;
       }
 
       .invitation p > a {
@@ -70,7 +73,7 @@
       }
 
       .invitation h2 {
-        font-size: 10vw;
+        /* font-size: 5vw; */
       }
 
       .invitation hr {
@@ -80,7 +83,7 @@
       }
 
       .invitation p.by {
-        font-size: 3vw;
+        /* font-size: 3vh; */
         position: absolute;
         bottom: 10vh;
         width: 100vw;
@@ -90,7 +93,7 @@
 
       img {
         position: absolute;
-        max-width: 30vw;
+        max-width: 200px;
         height: auto;
         opacity: 0.7;
         z-index: -1;
@@ -109,24 +112,105 @@
           left: 0;
         }
       }
+
+      @keyframes sway {
+        0% {
+          transform: rotate(1deg);
+        }
+        50% {
+          transform: rotate(-1deg);
+        }
+        100% {
+          transform: rotate(1deg);
+        }
+      }
+
+      .LightSwitch {
+        position: fixed;
+        top: -60px;
+        right: 80px;
+        border: none;
+        background-color: transparent;
+        transform-origin: top;
+        transform: rotate(1deg);
+        animation-name: sway;
+        animation-timing-function: ease-in-out;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        transition: 0.2s;
+      }
+
+      .LightSwitch:active {
+        top: -5px;
+        transition: 0.2s;
+      }
+
+      .LightSwitch:hover {
+        cursor: pointer;
+      }
+
+      .LightRope {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .Bead {
+        height: 12px;
+        width: 12px;
+        background-color: #32373b;
+        border-radius: 50%;
+        display: block;
+      }
+
+      .Bob {
+        border-bottom: 40px solid #cc8800;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        height: 0;
+        width: 15px;
+        border-radius: 50px 50px 50px 50px;
+      }
+
+      /*Light bulbs*/
     </style>
   </head>
   <body>
+    <button content="night" class="LightSwitch" onClick="toggleAnimations()">
+      <div class="LightRope">
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bead"></span>
+        <span class="Bob"></span>
+      </div>
+    </button>
     <canvas id="c"></canvas>
     <div class="content">
       <img class="left" src="/adt-left.png" />
       <div class="invitation">
         <h1>Dharani Trisandya</h1>
         <p>is turning</p>
-        <h2>ONE</h2>
-        <hr />
+        <h1>ONE</h1>
+
         <p class="para">
           Loads of color and, lots of sweet let's make Dharani's birthday a
           wonderful treat. <br />
           Come help us celebrate the special day with a cheerful party. You're
           warmly invited to our Princess First Birthday Celebration!
         </p>
-        <hr />
+
         <p class="para">
           Venue:
           <a href="https://maps.app.goo.gl/TAxfFjDg7mNiZQsf8"
@@ -137,7 +221,29 @@
       </div>
     </div>
 
+    <audio class="song" controls="" loop="">
+      <source src="/music.mp3" />
+
+      Your browser isn't invited for super fun audio time.
+    </audio>
+
     <script>
+      let _enableBalloons = true,
+        _enableFireworks = true;
+      function toggleAnimations() {
+        var root = document.querySelector(":root");
+        var color = getComputedStyle(root);
+
+        _enableBalloons = !_enableBalloons;
+        _enableFireworks = !_enableFireworks;
+        const audio = document.querySelector(".song");
+        if (_enableBalloons) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      }
+
       // when animating on canvas, it is best to use requestAnimationFrame instead of setTimeout or setInterval
       // not supported in all browsers though and sometimes needs a prefix, so we need a shim
       window.requestAnimFrame = (function () {
@@ -357,6 +463,11 @@
 
         // main demo loop
         function loop() {
+          if (!_enableFireworks) {
+            requestAnimFrame(loop);
+            return;
+          }
+
           // this function will run endlessly with requestAnimationFrame
           requestAnimFrame(loop);
 
@@ -463,8 +574,12 @@
 
         var balloons = [];
 
+        const minRadius = Math.round(window.innerWidth / 360) + 20;
+        const maxRadius = minRadius + 30;
+        const maxBalloons = 10;
+
         function Balloon() {
-          this.r = randomIntFromInterval(20, 50);
+          this.r = randomIntFromInterval(minRadius, maxRadius);
           this.R = 1.4 * this.r;
           this.x = randomIntFromInterval(this.r, cw - this.r);
           this.y = ch + 2 * this.r;
@@ -476,13 +591,18 @@
         }
 
         function Draw() {
+          if (!_enableBalloons) {
+            requestId = requestAnimFrame(Draw);
+            ctx.clearRect(0, 0, cw, ch);
+            return;
+          }
           updateBallons(bCtx);
 
           //ctx.clearRect(0, 0, cw, ch);
           var img = bc;
           ctx.drawImage(img, 0, 0);
 
-          requestId = window.requestAnimationFrame(Draw);
+          requestId = requestAnimFrame(Draw);
         }
         //requestId = window.requestAnimationFrame(Draw);
 
@@ -505,7 +625,7 @@
 
         function updateBallons(ctx) {
           frames += 1;
-          if (frames % 37 == 0 && balloons.length < 37) {
+          if (frames % maxBalloons == 0 && balloons.length < maxBalloons) {
             var balloon = new Balloon();
             balloons.push(balloon);
           }
