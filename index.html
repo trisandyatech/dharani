@@ -4,18 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dharani Trisandya</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto"
+      rel="stylesheet"
+    />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <style>
-      @font-face {
-        /*font from https://codepen.io/Nimoi/pen/keaFn*/
-        font-family: "Monoton";
-        font-style: normal;
-        font-weight: 400;
-        src: local("Monoton"), local("Monoton-Regular"),
-          url(https://themes.googleusercontent.com/static/fonts/monoton/v4/AKI-lyzyNHXByGHeOcds_w.woff)
-            format("woff");
-      }
-
       * {
         margin: 0;
         padding: 0;
@@ -23,18 +17,24 @@
       }
 
       body {
-        /* background: radial-gradient(#fec215, #f8a90c); */
-        background: radial-gradient(circle, #444, #333, #222, #111, #000);
+        font-family: "Roboto";
+        font-weight: 500;
       }
 
       .content {
-        background: radial-gradient(circle, #444, #333, #222, #111, #000);
+        background: radial-gradient(circle, #10239e, #061178, #030852);
         position: absolute;
         left: 0;
         top: 0;
         width: 100vw;
         height: 100vh;
         z-index: -1;
+
+        color: #fff;
+      }
+
+      .anim .content {
+        animation: dimToBright 3s ease-in-out infinite alternate;
       }
 
       div.invitation {
@@ -43,19 +43,25 @@
         justify-content: center;
         flex-direction: column;
         text-align: center;
-        color: rgba(255, 239, 0, 0.8);
+        /* color: #e7de0d; */
+        color: inherit;
 
-        height: 100%;
+        height: 90%;
         /* font-size: 3vh; */
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
-          sans-serif;
         padding: 16px;
       }
 
       .invitation h1 {
-        font-family: Monoton;
-        font-size: 48px;
+        font-size: 120px;
+        color: #e7de0d;
+        text-shadow: 0 0 10px #fff;
+        padding: 10px;
+      }
+
+      @media (max-width: 920px) {
+        .invitation h1 {
+          font-size: 72px;
+        }
       }
 
       .invitation p {
@@ -72,44 +78,69 @@
         color: inherit;
       }
 
-      .invitation h2 {
-        /* font-size: 5vw; */
-      }
-
-      .invitation hr {
-        width: 100vw;
-        margin: 16px;
-        border-color: yellowgreen;
+      .invitation p.venue {
+        font-size: 18px;
       }
 
       .invitation p.by {
-        /* font-size: 3vh; */
         position: absolute;
-        bottom: 10vh;
+        bottom: 5vh;
         width: 100vw;
         text-align: right;
         right: 16px;
       }
 
-      img {
-        position: absolute;
-        max-width: 200px;
+      img.cake {
+        max-width: 100%;
         height: auto;
-        opacity: 0.7;
-        z-index: -1;
+        width: 200px;
       }
 
       img.left {
+        position: absolute;
+        max-width: 200px;
+        height: auto;
+        opacity: 0.9;
+        z-index: -1;
         bottom: 0;
+      }
+
+      .anim img.left {
         animation: moveLeftAndRight 3s ease-in-out infinite alternate;
+      }
+
+      .song {
+        width: 0px;
+        height: 0px;
       }
 
       @keyframes moveLeftAndRight {
         0% {
-          left: -100px;
+          left: -150px;
         }
         100% {
           left: 0;
+        }
+      }
+
+      @keyframes dimToBright {
+        0% {
+          background: radial-gradient(circle, #10239e, #061178, #030852);
+        }
+        20% {
+          background: radial-gradient(circle, #061178, #030852);
+        }
+        40% {
+          background: radial-gradient(circle, #030852);
+        }
+        60% {
+          background: radial-gradient(circle, #10239e, #061178, #030852);
+        }
+        80% {
+          background: radial-gradient(circle, #061178, #030852);
+        }
+        100% {
+          background: radial-gradient(circle, #030852);
         }
       }
 
@@ -172,7 +203,7 @@
         border-radius: 50px 50px 50px 50px;
       }
 
-      /*Light bulbs*/
+      /*Text*/
     </style>
   </head>
   <body>
@@ -202,7 +233,7 @@
       <div class="invitation">
         <h1>Dharani Trisandya</h1>
         <p>is turning</p>
-        <h1>ONE</h1>
+        <img class="cake" src="/cake.png" />
 
         <p class="para">
           Loads of color and, lots of sweet let's make Dharani's birthday a
@@ -211,7 +242,7 @@
           You're warmly invited to our Princess First Birthday Celebration!
         </p>
 
-        <p class="para">
+        <p class="venue">
           Venue:
           <a href="https://maps.app.goo.gl/TAxfFjDg7mNiZQsf8"
             >Our home @ Pedakallepalli</a
@@ -228,11 +259,11 @@
     </audio>
 
     <script>
-      let _enableBalloons = true,
-        _enableFireworks = true;
+      let _enableBalloons = false,
+        _enableFireworks = false;
+
       function toggleAnimations() {
-        var root = document.querySelector(":root");
-        var color = getComputedStyle(root);
+        document.body.classList.toggle("anim");
 
         _enableBalloons = !_enableBalloons;
         _enableFireworks = !_enableFireworks;
@@ -587,7 +618,7 @@
           this.pm = Math.random() < 0.5 ? -1 : 1;
           this.speed = randomIntFromInterval(1.5, 4);
           this.k = this.speed / 5;
-          this.hue = this.pm > 0 ? "210" : "10";
+          this.hue = ["210", "58", "10"][randomIntFromInterval(0, 2)];
         }
 
         function Draw() {
