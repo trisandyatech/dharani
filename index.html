@@ -3,13 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta property="og:type" content="profile">
-<meta property="og:title" content="Dharani Trisandya's Birthday Celebration">
-<meta property="og:url" content="https://dharani.trisandya.com">
-<meta property="og:image" content="https://dharani.trisandya.com/dharani.jpg">
-<meta property="og:description" content="Join us in celebrating our little princess first birthday.">
-<meta property="profile:first_name" content="Dharani Trisandya">
-<meta property="profile:last_name" content="Araja">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Dharani Trisandya's Birthday Celebration">
+    <meta property="og:url" content="https://dharani.trisandya.com">
+    <meta property="og:image" content="https://dharani.trisandya.com/dharani.jpg">
+    <meta property="og:description" content="Join us in celebrating our little princess first birthday.">
     <title>Dharani Trisandya</title>
     
     <link
@@ -71,12 +69,6 @@
         padding: 10px;
       }
 
-      @media (max-width: 920px) {
-        .invitation h1 {
-          font-size: 72px;
-        }
-      }
-
       .invitation p {
         font-size: 24px;
       }
@@ -91,15 +83,21 @@
       }
 
       .invitation p.venue {
-        font-size: 18px;
+        font-size: 20px;
       }
 
-      .invitation p.by {
-        position: absolute;
-        bottom: 5vh;
-        width: 100vw;
-        text-align: right;
-        right: 16px;
+       @media (max-width: 920px) {
+        .invitation h1 {
+          font-size: 72px;
+        }
+         
+        .invitation p {
+          font-size: 18px;
+        }
+
+         .invitation p.venue {
+          font-size: 16px;
+        }
       }
 
       img.cake {
